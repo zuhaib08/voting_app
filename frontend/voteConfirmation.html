@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote Confirmation - Voting App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Vote Confirmation</h2>
+        
+        <div id="votedMessage">
+            <p>Thank you for voting!</p>
+            <p>You voted for: <span id="votedCandidate"></span></p>
+        </div>
+        
+        <div id="notVotedMessage">
+            <p>You have not voted yet.</p>
+        </div>
+        <a href="candidates.html" class="vote-again-link">Go Back to Vote Again</a>
+        
+        <button onclick="logout()" class="logout-button">Logout</button>
+    </div>
+    <script src="scripts.js"></script>
+</body>
+</html>
