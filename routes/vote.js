@@ -48,6 +48,22 @@ router.get('/votes', async (req, res) => {
     }
 });
 
+router.get('/admin/votes', verifyToken, async (req, res) => {
+    try {
+        const votes = await getAllVotes();
+        const candidates = await getAllCandidates();
+
+        const candidateVotes = candidates.map(candidate => {
+            const voteCount = votes.filter(vote => vote.candidate_id === candidate.id).length;
+            return { ...candidate, voteCount };
+        });
+
+        res.json({ totalVotes: votes.length, candidateVotes });
+    } catch (err) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 
 
 router.post('/:candidateId', verifyToken, async (req, res) => {
@@ -60,6 +76,25 @@ router.post('/:candidateId', verifyToken, async (req, res) => {
         res.status(200).json({ message: 'Vote recorded successfully' });
     } catch (err) {
         res.status(500).json(err.message);
+    }
+});
+router.delete('/vote/:voteId', verifyToken, async (req, res) => {
+    const voteId = req.params.voteId;
+
+    try {
+        // Fetch the vote to get the candidate_id
+        const vote = await getVoteById(voteId);
+        if (!vote) return res.status(404).json({ message: 'Vote not found' });
+
+        // Delete the vote
+        await deleteVote(voteId);
+
+        // Decrement the voteCount for the candidate
+        await db.query('UPDATE Candidates SET voteCount = voteCount - 1 WHERE id = ?', [vote.candidate_id]);
+
+        res.json({ message: 'Vote deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 

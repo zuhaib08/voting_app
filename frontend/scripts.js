@@ -1,7 +1,10 @@
-
 function logout() {
-    localStorage.clear()
-    window.location.href = 'login.html';
+    localStorage.clear(); // Clears all stored data
+    if (window.location.pathname.includes('dashboard.html')) {
+        window.location.href = 'admin.html'; // Redirect to admin login
+    } else {
+        window.location.href = 'login.html'; // Redirect to user login
+    }
 }
 
 document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
@@ -41,6 +44,7 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
     const address = document.getElementById('address').value;
     const aadhar = document.getElementById('aadhar').value;
     const password = document.getElementById('password').value;
+    
 
     try {
         const response = await fetch('http://localhost:3001/api/auth/register', {
@@ -193,3 +197,66 @@ async function vote(candidateId, candidateName) {
 
 
 
+// Admin Login
+document.getElementById('adminLoginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    try {
+        const response = await fetch('http://localhost:3001/api/auth/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            localStorage.setItem('adminToken', data.token);
+            window.location.href = 'dashboard.html';
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        alert('Admin login failed. Please try again.');
+    }
+});
+
+// Fetch Admin Dashboard Data
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.location.pathname.includes('dashboard.html')) {
+        const token = localStorage.getItem('adminToken');
+
+        if (!token) {
+            window.location.href = 'admin.html';
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:3001/api/vote/admin/votes', {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+
+            if (response.status === 401) {
+                localStorage.removeItem('adminToken');
+                window.location.href = 'admin.html';
+                return;
+            }
+
+            const data = await response.json();
+            document.getElementById('totalVotes').innerText = `Total Votes: ${data.totalVotes}`;
+
+            const tbody = document.querySelector('#candidateVotes tbody');
+            tbody.innerHTML = data.candidateVotes.map(candidate => `
+                <tr>
+                    <td>${candidate.name}</td>
+                    <td>${candidate.party}</td>
+                    <td>${candidate.voteCount}</td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            alert('Error loading dashboard data');
+        }
+    }
+});

@@ -37,4 +37,24 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.post('/admin/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const user = await findUserByEmail(email);
+        if (!user) return res.status(400).json({ message: 'User not found' });
+
+        const isValidPassword = await validatePassword(password, user.password);
+        if (!isValidPassword) return res.status(400).json({ message: 'Invalid credentials' });
+
+        if (!user.isAdmin) return res.status(403).json({ message: 'Access denied. Not an admin.' });
+
+        const payload = { userId: user.id, isAdmin: true };
+        const token = jwt.encode(payload, process.env.SECRET_KEY);
+        res.json({ message: 'Admin login successful', token });
+    } catch (err) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 module.exports = router;
